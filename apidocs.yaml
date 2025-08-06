@@ -1,0 +1,352 @@
+openapi: 3.0.4
+info:
+  title: API de personajes de Marvel Rivals
+  description: |
+    Una API desarrollada en Python que permite gestionar personajes del universo Marvel Rivals. El proyecto permite agregar personajes nuevos, realizar paginación de resultados, y está conectado con X (Twitter) para obtener publicaciones recientes relacionadas con Marvel Rivals.
+    Autores de Servicio:
+    Diana Carolina Garcia
+    Alvaro Fabian Ovalle
+    Maria Fernanda Moran
+    Allan Daniel Soria
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000/
+paths:
+  /personajes:
+    get:
+      tags:
+        - personajes
+      summary: Trae la lista de personajes
+      description: Esta función devuelve una lista de personajes del universo Marvel Rivals cuando la solicitud es exitosa, con un código de estado 200. La respuesta está en formato JSON y contiene varios personajes, cada uno representado por un conjunto de datos que incluye su identificador, nombre, universo al que pertenece, rol dentro del juego, armas que utiliza, nivel de salud, y la fecha en que fue creado. Además, cada personaje tiene un origen, el cual está compuesto por un nombre y una dirección web. Esta estructura permite obtener información detallada de cada personaje de forma organizada.
+      operationId: getPersonajesList
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            example: 1
+          description: Pagina de la lista de elementos, cada pagina es de 10 
+      responses:
+        '200':
+          description: Lista de personajes de Marvel Rivals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Personajes'  
+  /personajes/media:                
+    get:
+      tags:
+        - personajes
+      summary: Obtener tuits con medios relacionados con Marvel Rivals
+      description: Esta función devuelve una lista de tuits que contienen medios cuando la solicitud es válida, con un código de estado 200. La respuesta está en formato JSON y presenta un arreglo de objetos, donde cada tuit incluye su identificador, el texto del mensaje y el autor que lo publicó. Si la solicitud falla por falta de autenticación o por un token inválido, se devuelve un error con el código 401, acompañado de un mensaje de error y un detalle que incluye información como el título del error, tipo, estado y una descripción más específica. En caso de que se realicen demasiadas solicitudes a la API de Twitter en poco tiempo, se genera un error con código 429 que también contiene un mensaje y detalles similares sobre la limitación de acceso.
+      operationId: getTuitsConMedios
+      responses:
+        '200':
+          description: Lista de tuits con medios
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tweets'
+        '429':
+          description: Demasiadas solicitudes a la API de Twitter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TwitterErrorResponse'
+        '401':
+          description: No autorizado. Token de acceso inválido o ausente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TwitterUnauthorizedResponse'
+  /personajes/ElementosPOST:
+    post:
+      tags:
+        - personajes
+      summary: Crear nuevo personaje
+      description: Esta función permite crear un nuevo personaje del universo Marvel Rivals mediante una solicitud en formato JSON que incluye los datos obligatorios del personaje, como su nombre, universo, rol, armas, salud y un objeto anidado llamado origen con su respectivo nombre y URL. Si la creación es exitosa, la respuesta devuelve un código de estado 200 junto con un mensaje de confirmación y los datos completos del personaje recién creado, incluyendo un identificador único y la fecha de creación. Esta operación facilita el registro de nuevos personajes en el sistema de forma estructurada.
+      operationId: crearPersonaje
+      requestBody:
+        description: Personaje a crear
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PersonajesReqBody'
+      responses:
+        '200':
+          description: Personaje creado exitosamente
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/PersonajeRespuestaExitosa'
+        '422':
+            description: Datos Invalidos
+        default:
+            description: El campo 'Nombre' es requerido. Field required
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/PersonajesResError'
+        '409':
+          description: Este personaje ya existe.
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/PersonajeYaExiste'
+
+
+  /personajes/{id}:
+    get:
+      summary: Obtener un personaje por ID
+      description: Esta función permite obtener la información detallada de un personaje específico del universo Marvel Rivals. Cuando la solicitud es exitosa, devuelve un código de estado 200 junto con un objeto en formato JSON que contiene todos los datos del personaje, como su identificador, nombre, universo, rol, armas, salud, origen (con nombre y URL) y la fecha de creación. En caso de que el personaje no exista en el sistema, la API responde con un código de estado 404 y un mensaje en el campo "detail" que indica que el personaje no fue encontrado.
+      operationId: obtenerPersonaje
+      tags:
+        - personajes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID del personaje a buscar
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Información del personaje encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Personajes'
+        '404':
+          description: Personaje no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorID'
+    delete:
+      summary: Eliminar un personaje
+      description: Esta función se encarga de eliminar un personaje del universo Marvel Rivals. Si la operación se realiza correctamente, la respuesta devuelve un código de estado 200 junto con un mensaje en formato JSON que confirma que el personaje fue eliminado exitosamente. En caso de que el personaje no exista o no se encuentre en el sistema, se responde con un código de estado 404 y un mensaje en el campo "detail" que indica que el personaje no fue encontrado.
+      operationId: deletePersonaje
+      tags:
+        - personajes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID del personaje a eliminar
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Personaje eliminado correctamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  mensaje:
+                    type: string
+                    example: "Personaje eliminado correctamente"
+        '404':
+          description: Personaje no encontrado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                    example: "Personaje no encontrado"
+components:
+  schemas:
+    Tweets:
+      type: object
+      required:
+        - id
+        - texto
+        - autor
+      properties:
+        id:
+          type: string
+          example: "1945211837542244631"
+        texto:
+          type: string
+          example: "🛠 Hero Balance Patch incoming on July 17 at 9:00 AM UTC! Check  out the full balance patch here >> https://t.co/EMQWAAXFU0"
+        autor:
+          type: string
+          example: "1726712518155046912"
+    TwitterErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "No se pudieron obtener los tweets, demasiados intentos"
+        detalle:
+          type: object
+          properties:
+            title:
+              type: string
+              example: "Too Many Requests"
+            detail:
+              type: string
+              example: "Too Many Requests"
+            type:
+              type: string
+              example: "about:blank"
+            status:
+              type: integer
+              example: 429
+    TwitterUnauthorizedResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "No se pudieron obtener los tweets"
+        detalle:
+          type: object
+          properties:
+            title:
+              type: string
+              example: "Unauthorized"
+            type:
+              type: string
+              example: "about:blank"
+            status:
+              type: integer
+              example: 401
+            detail:
+              type: string
+              example: "Unauthorized"
+    PersonajesResError:
+      type: object
+      required:
+      - message
+      - status
+      properties:
+        mensaje_error:
+          type: array
+          items:
+            type: string 
+          example:
+            - "El campo 'Nombre' es requerido. Field required"
+    PersonajeYaExiste:
+      type: object
+      properties:
+        detail:
+          type: string
+          example: Ya existe un personaje con el nombre 'Groot'
+    PersonajesReqBody:
+      type: object
+      required:
+      - Nombre
+      - Universo
+      - RolDePersonaje
+      - Armas
+      - Salud
+      - origen
+      properties:
+        Nombre:
+          type: string
+          example: Groot
+        Universo:
+          type: string
+          example: Marvel
+        RolDePersonaje:
+          type: string
+          example: "Soporte"
+        Armas:
+          type: string
+          example: "Ramas"
+        Salud: 
+          type: integer
+          example: "120"
+        origen: 
+          type: object
+          required: 
+            - nombre
+            - url
+          properties:
+            nombre: 
+              type: string
+              example: "Planeta X"
+            url:
+              type: string
+              example: "https://marvel.com/groot"
+    PersonajeRespuestaExitosa:
+      type: object
+      required:
+      - mensaje
+      - personaje
+      properties:
+        mensaje:
+          type: string
+          example: "Personaje agregado exitosamente"
+        personaje:
+          $ref: '#/components/schemas/Personajes'
+    Personajes:
+      type: object
+      required:
+      - id
+      - Nombre
+      - Universo
+      - RolDePersonaje
+      - Armas
+      - Salud
+      - origen
+      - FechaCreacion
+      properties:
+        id:
+          type: integer
+          example: 1
+        Nombre:
+          type: string
+          example: "Groot"
+        Universo:
+          type: string
+          example: "Marvel"
+        RolDePersonaje:
+          type: string
+          example: "Soporte"
+        Armas:
+          type: string
+          example: "Ramas"
+        Salud: 
+          type: integer
+          example: "120"
+        origen: 
+          type: object
+          required: 
+            - nombre
+            - url
+          properties:
+            nombre: 
+              type: string
+              example: "Planeta X"
+            url:
+              type: string
+              example: "https://marvel.com/groot"
+        FechaCreacion:
+          type: string
+          example: "2025-06-24T20:31:24.099899"
+    ErrorID:
+      type: object
+      properties:
+        detail:
+          type: string
+          example: "No se encontró el personaje con ID 1"
+        
+    Error:
+      type: object
+      properties:
+        code:
+        
+
+
+
+      
