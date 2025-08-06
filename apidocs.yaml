@@ -4,9 +4,9 @@ info:
   description: |
     Una API desarrollada en Python que permite gestionar personajes del universo Marvel Rivals. El proyecto permite agregar personajes nuevos, realizar paginación de resultados, y está conectado con X (Twitter) para obtener publicaciones recientes relacionadas con Marvel Rivals.
     Autores de Servicio:
-    Diana Carolina Garcia
-    Alvaro Fabian Ovalle
-    Maria Fernanda Moran
+    Diana Carolina Garcia, 
+    Alvaro Fabian Ovalle, 
+    Maria Fernanda Moran, 
     Allan Daniel Soria
   version: 1.0.0
 servers:
@@ -346,6 +346,7 @@ components:
       properties:
         code:
         
+
 
 
 
